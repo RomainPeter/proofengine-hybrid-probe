@@ -1,13 +1,9 @@
-# Python
+.venv
 __pycache__/
 *.pyc
-.venv/
-# OS/IDE
-.DS_Store
-.vscode/
-# Project
-artifacts/
-*.zip
-*.sha256
-spec_pack/compiled/
-spec_pack/samples/*.tmp
+.pytest_cache/
+.mypy_cache/
+ruff_cache/
+.out/
+out/
+dist/

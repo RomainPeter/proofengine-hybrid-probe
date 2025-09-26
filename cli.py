@@ -65,7 +65,14 @@ class ProofEngineOrchestrator:
         return create_initial_state(
             hypotheses={f"goal:{goal}"},
             evidences=set(),
-            obligations=["tests_ok", "lint_ok", "types_ok", "security_ok", "complexity_ok", "docstring_ok"],
+            obligations=[
+                "tests_ok",
+                "lint_ok",
+                "types_ok",
+                "security_ok",
+                "complexity_ok",
+                "docstring_ok",
+            ],
             artifacts=[],
             sigma={"case_id": case_id, "timestamp": now_iso()},
         )
@@ -73,14 +80,20 @@ class ProofEngineOrchestrator:
     def _execute_planning_phase(self, goal: str) -> Dict[str, Any]:
         try:
             summary = json.dumps({"base_dir": self.base_dir, "goal": goal})
-            plan = self.planner.propose_plan(goal, summary, self.current_state.K, self.execution_history)
+            plan = self.planner.propose_plan(
+                goal, summary, self.current_state.K, self.execution_history
+            )
             pcap = PCAP(
                 operator="plan",
                 case_id=self.current_state.Sigma.get("case_id", "unknown"),
                 pre={"H": self.current_state.H, "K": self.current_state.K},
                 post={"plan": plan.plan},
                 obligations=self.current_state.K,
-                justification=VJustification(time_ms=0, llm_time_ms=plan.llm_meta.get("latency_ms") if plan.llm_meta else 0, model=plan.llm_meta.get("model") if plan.llm_meta else None),
+                justification=VJustification(
+                    time_ms=0,
+                    llm_time_ms=plan.llm_meta.get("latency_ms") if plan.llm_meta else 0,
+                    model=plan.llm_meta.get("model") if plan.llm_meta else None,
+                ),
                 proof_state_hash=merkle_of({"H": self.current_state.H, "K": self.current_state.K}),
                 toolchain={"planner": "metacognitive"},
                 llm_meta=plan.llm_meta,
@@ -97,21 +110,39 @@ class ProofEngineOrchestrator:
                 "pcap_file": self.pcap_dir,
             }
         except Exception as exc:  # noqa: BLE001
-            return {"success": False, "error": str(exc), "plan": [], "estimated_success": 0.0, "estimated_cost": 0.0}
+            return {
+                "success": False,
+                "error": str(exc),
+                "plan": [],
+                "estimated_success": 0.0,
+                "estimated_cost": 0.0,
+            }
 
     def _execute_generation_phase(self, goal: str) -> Dict[str, Any]:
         try:
-            variants = self.generator.propose_variants(goal, json.dumps(self.current_state.K), self.current_state.K, k=3)
+            variants = self.generator.propose_variants(
+                goal, json.dumps(self.current_state.K), self.current_state.K, k=3
+            )
             best_patch = None
             best_result = None
             best_index = -1
             for idx, variant in enumerate(variants):
-                evaluation = self.controller.evaluate_patch(variant.patch_unified, context={"H_before": list(self.current_state.H), "K_before": self.current_state.K})
+                evaluation = self.controller.evaluate_patch(
+                    variant.patch_unified,
+                    context={
+                        "H_before": list(self.current_state.H),
+                        "K_before": self.current_state.K,
+                    },
+                )
                 evaluation_for_hash = dict(evaluation)
                 if isinstance(evaluation_for_hash.get("obligation_results"), ObligationResults):
-                    evaluation_for_hash["obligation_results"] = evaluation_for_hash["obligation_results"].model_dump()
+                    evaluation_for_hash["obligation_results"] = evaluation_for_hash[
+                        "obligation_results"
+                    ].model_dump()
                 if isinstance(evaluation_for_hash.get("justification"), VJustification):
-                    evaluation_for_hash["justification"] = evaluation_for_hash["justification"].to_dict()
+                    evaluation_for_hash["justification"] = evaluation_for_hash[
+                        "justification"
+                    ].to_dict()
                 pcap = PCAP(
                     operator="verify",
                     case_id=self.current_state.Sigma.get("case_id", "unknown"),
@@ -125,7 +156,10 @@ class ProofEngineOrchestrator:
                     verdict="pass" if evaluation.get("success") else "fail",
                 )
                 write_pcap(pcap, self.pcap_dir)
-                if evaluation.get("success") and (best_result is None or evaluation.get("violations", 0) < best_result.get("violations", 0)):
+                if evaluation.get("success") and (
+                    best_result is None
+                    or evaluation.get("violations", 0) < best_result.get("violations", 0)
+                ):
                     best_patch = variant
                     best_result = evaluation
                     best_index = idx
@@ -156,14 +190,24 @@ class ProofEngineOrchestrator:
                 verdict="fail",
             )
             write_pcap(pcap, self.pcap_dir)
-            replan = self.planner.replan_after_failure(goal, ["analyse", "retry"], "All variants failed", json.dumps(self.current_state.K), self.current_state.K, [])
+            replan = self.planner.replan_after_failure(
+                goal,
+                ["analyse", "retry"],
+                "All variants failed",
+                json.dumps(self.current_state.K),
+                self.current_state.K,
+                [],
+            )
             replan_pcap = PCAP(
                 operator="replan",
                 case_id=self.current_state.Sigma.get("case_id", "unknown"),
                 pre={"failure": "all variants failed"},
                 post={"new_plan": replan.plan},
                 obligations=self.current_state.K,
-                justification=VJustification(time_ms=0, llm_time_ms=replan.llm_meta.get("latency_ms") if replan.llm_meta else 0),
+                justification=VJustification(
+                    time_ms=0,
+                    llm_time_ms=replan.llm_meta.get("latency_ms") if replan.llm_meta else 0,
+                ),
                 proof_state_hash=merkle_of({"replan": True}),
                 toolchain={"planner": "metacognitive"},
                 llm_meta=replan.llm_meta,
@@ -171,14 +215,24 @@ class ProofEngineOrchestrator:
             )
             write_pcap(replan_pcap, self.pcap_dir)
             self.execution_history.append({"operator": "replan", "verdict": "pass"})
-            return {"success": False, "rollback": True, "replan": replan.plan, "estimated_success": replan.est_success, "notes": replan.notes}
+            return {
+                "success": False,
+                "rollback": True,
+                "replan": replan.plan,
+                "estimated_success": replan.est_success,
+                "notes": replan.notes,
+            }
         except Exception as exc:  # noqa: BLE001
             return {"success": False, "rollback": True, "error": str(exc)}
 
     def _execute_verification_phase(self) -> Dict[str, Any]:
         try:
             result = verify_pcap_dir(self.pcap_dir, self.audit_dir)
-            return {"success": True, "verification": result, "attestation_file": result.get("attestation_file")}
+            return {
+                "success": True,
+                "verification": result,
+                "attestation_file": result.get("attestation_file"),
+            }
         except Exception as exc:  # noqa: BLE001
             return {"success": False, "error": str(exc)}
 
@@ -187,7 +241,12 @@ class ProofEngineOrchestrator:
             metrics = self.metrics_collector.collect_metrics(self.pcap_dir)
             markdown = self.report_generator.save_report(metrics, self.metrics_dir, "markdown")
             json_report = self.report_generator.save_report(metrics, self.metrics_dir, "json")
-            return {"success": True, "metrics": metrics, "markdown_report": markdown, "json_report": json_report}
+            return {
+                "success": True,
+                "metrics": metrics,
+                "markdown_report": markdown,
+                "json_report": json_report,
+            }
         except Exception as exc:  # noqa: BLE001
             return {"success": False, "error": str(exc)}
 

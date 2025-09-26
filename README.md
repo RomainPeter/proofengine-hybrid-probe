@@ -1,47 +1,65 @@
-# Proof Orchestrator – Fit Probe
+# Proof Engine — Public Brief
 
-## Short
-Hybrid proof‑carrying orchestration: stochastic generation inside, deterministic verification outside. Every step is a PCAP (typed journal, obligations K, cost vector V, delta δ), with a deterministic verifier and replayable audit pack.
+[![CI](https://img.shields.io/github/actions/workflow/status/OWNER/REPO/ci.yml?branch=main)](https://github.com/OWNER/REPO/actions)
+![License Code](https://img.shields.io/badge/license-BUSL--1.1-blue)
+![License Docs](https://img.shields.io/badge/docs-CC%20BY--NC--ND%204.0-orange)
 
-## Scope
-- **Today**: code demo (replayable, offline via cache).
-- **Tomorrow**: portability to formal mathematics (Gauss‑like pipelines). This is a fit probe, not a Lean integration.
+Independent research brief on an auditable AI architecture: Orchestrator (deterministic), Semantic Engine (LLM as stochastic oracle — stubbed here), and Formal Verifier (deterministic). This repo provides:
+- A minimal PCAP (Proof-Carrying Action) format
+- JSON Schemas (X, PCAP)
+- A tiny demo of code compliance verification (unit tests, type checks, lints)
+- A mermaid diagram of the Plan–Execute–Replan double loop
+
+No affiliation or endorsement by any third party.
 
 ## Why
-- Lower oversight cost; raise auditability and reproducibility by construction.
-- Structure failures into "incident → rule → non‑regression" loops.
+Classical prompt work is opaque and hard to audit. We separate concerns and carry proofs with each action. Outputs include a trace and a verifier attestation.
 
-## Quickstart
-1) `python3 -m venv .venv && source .venv/bin/activate`
-2) `pip install -r requirements.txt`
-3) `cp .env.example .env`  # add OPENROUTER_API_KEY and OPENROUTER_MODEL (e.g., x-ai/grok-4-fast:free)
-4) `make verify`
-5) `make demo`
-6) `make audit-pack`
-7) `make logs`
-8) `make release`
+## Two-command demo
+```bash
+make setup
+make demo.pass   # or: make demo.fail
+```
 
-## Verification in 2 minutes
-- `make verify`        # LLM ping + JSON strict
-- `make demo`          # Plan → Variants → (fail → incident → replan) → success
-- `make audit-pack`    # out/audit/attestation.json (digest, count, verdicts)
-- `make logs`          # LOGS.md (timeline, obligations snapshot, delta_mean if available)
-- `make release`       # dist/audit_pack_<tag>.zip
+Outputs:
+- PCAP: `out/pcap.add.json`
+- Verifier attestation: `out/attestations/attestation.json`
+- Workspace used for hermetic checks: `out/workspace/`
 
-## Artifacts
-- `out/pcap/*.json` (chained Proof‑Carrying Actions)
-- `out/audit/attestation.json` (SHA256 digest, verdicts)
-- `LOGS.md` (annotated timeline)
-- `docs/2pager.md` (architecture and metrics)
-- `dist/audit_pack_<tag>.zip` (one‑file bundle)
+## Architecture (neutral)
+- Orchestrator: owns state X, builds PCAPs, and selects operators.
+- Semantic Engine (stub): would generate candidates via micro-prompts (not included here).
+- Formal Verifier: validates PCAP obligations deterministically.
 
-## Alignment with Math Inc vision
-- Expansion (stochastic exploration) + Compression (deterministic verification) per step.
-- Network value via reuse/connectivity; audit surface for large‑scale autoformalization.
-- Portable orchestration layer; no Lean dependency in this probe.
+```mermaid
+flowchart LR
+  G[Goal + Constraints] --> P[Plan (Π)]
+  P -->|operator| O[Orchestrator]
+  O -->|micro-prompt| L[Semantic Engine (LLM, stub)]
+  L -->|candidate| O2[Orchestrator]
+  O2 -->|CCA/PCAP| V[Formal Verifier]
+  V -->|accepted/rejected + attestation| O3[Orchestrator]
+  O3 -->|update X / replan| P
+```
 
-## Limitations
-- Demo in code space only; no claim about Lean/tactics performance.
-- LLM ping requires OpenRouter API key; replay uses local cache.
+See docs/diagram.mmd for the loop.
 
-**License**: Apache-2.0
+## What's included
+- Minimal PCAP schema and example
+- Verifier that runs: jsonschema validation, ruff, mypy, pytest
+- Reproducible run via pinned deps
+- Public documentation under CC BY-NC-ND; code under BUSL-1.1
+
+## Limits
+- No real LLM; candidate generation is stubbed (files in examples/)
+- Signing is a demo HMAC, not production-grade (see SECURITY.md)
+
+## Quick start
+- `examples/candidates/add_v1.py`: compliant version
+- `examples/candidates/add_buggy.py`: fails tests (overflow logic)
+- `examples/proofs/tests/test_add.py`: property tests
+- `examples/constraints/obligations.simple.json`: obligations K
+
+## License
+- Code: BUSL-1.1 (see LICENSES/CODE_LICENSE.txt)
+- Docs: CC BY-NC-ND 4.0 (see LICENSES/DOCS_LICENSE.txt)

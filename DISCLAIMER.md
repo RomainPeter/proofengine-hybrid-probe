@@ -1,0 +1,1 @@
+This repository is an independent research brief. No endorsement by any company. The "partner-specific" materials referenced in external articles are private and not included here. For inquiries: contact via issues or email.

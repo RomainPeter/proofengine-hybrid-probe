@@ -1,0 +1,8 @@
+Business Source License 1.1
+Licensor: Independent Research (demo)
+Licensed Work: proof-engine-brief
+Change Date: 2028-01-01
+Change License: Apache-2.0
+
+Use Limitation: Production use is not permitted except for non-commercial evaluation and research. See BUSL-1.1 for full terms.
+(For full legal text, see: https://mariadb.com/bosl-1-1/)

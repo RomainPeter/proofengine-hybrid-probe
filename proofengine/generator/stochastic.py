@@ -2,7 +2,15 @@ from typing import Any, Dict, List, Optional
 from proofengine.core.llm_client import LLMClient
 from .prompts import GENERATOR_SYSTEM, GENERATOR_USER_TMPL
 
-def propose_actions(task: str, context: str, obligations: str, k: int = 3, temperature: float = 0.8, client: Optional[LLMClient] = None) -> List[Dict[str, Any]]:
+
+def propose_actions(
+    task: str,
+    context: str,
+    obligations: str,
+    k: int = 3,
+    temperature: float = 0.8,
+    client: Optional[LLMClient] = None,
+) -> List[Dict[str, Any]]:
     llm = client or LLMClient()
     variants: List[Dict[str, Any]] = []
     for i in range(k):

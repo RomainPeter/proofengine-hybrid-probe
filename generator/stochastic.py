@@ -25,7 +25,9 @@ class StochasticGenerator:
         seed: Optional[int] = None,
         k: int = 3,
     ) -> List[ActionVariant]:
-        actions = self.action_generator.propose_actions(goal, obligations, seed=seed or self.seed, k=k)
+        actions = self.action_generator.propose_actions(
+            goal, obligations, seed=seed or self.seed, k=k
+        )
         self.generation_history.extend(
             {
                 "action_id": action.action_id,

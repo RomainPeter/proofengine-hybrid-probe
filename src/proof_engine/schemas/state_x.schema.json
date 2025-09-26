@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StateX",
+  "type": "object",
+  "properties": {
+    "H": {"type": "array"},
+    "E": {"type": "array"},
+    "K": {"type": "object"},
+    "J": {"type": "array"},
+    "A": {"type": "array"},
+    "Sigma": {"type": "object"}
+  }
+}

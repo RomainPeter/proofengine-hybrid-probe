@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PCAP",
+  "type": "object",
+  "required": ["action", "context_hash", "obligations", "proofs", "justification"],
+  "properties": {
+    "action": {"type": "string"},
+    "context_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "obligations": {"type": "object"},
+    "proofs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "path"],
+        "properties": {
+          "kind": {"type": "string"},
+          "path": {"type": "string"}
+        }
+      }
+    },
+    "justification": {
+      "type": "object",
+      "properties": {
+        "exec_time_est": {"type": "number", "minimum": 0},
+        "audit_cost_est": {"type": "number", "minimum": 0},
+        "security_risk_est": {"type": "number", "minimum": 0},
+        "info_loss_est": {"type": "number", "minimum": 0},
+        "tech_debt_est": {"type": "number", "minimum": 0}
+      }
+    },
+    "metadata": {"type": "object"}
+  }
+}

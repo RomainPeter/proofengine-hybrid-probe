@@ -1,0 +1,30 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m venv .venv
+      - run: .venv/bin/pip install -r requirements.txt
+      - name: Run demo tests
+        run: |
+          .venv/bin/python -m proof_engine.orchestrator build-pcap --candidate examples/candidates/add_v1.py --out out/pcap.add.json
+          .venv/bin/python -m proof_engine.verifier verify --pcap out/pcap.add.json
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body_path: .github/RELEASE.md
+          draft: false
+          prerelease: false

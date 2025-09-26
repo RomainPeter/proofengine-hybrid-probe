@@ -1,22 +1,32 @@
 PY=python3
-
-.PHONY: setup verify demo audit-pack logs release
+VENV=.venv
+PIP=$(VENV)/bin/pip
+PYBIN=$(VENV)/bin/python
+RUN=$(PYBIN)
+RUFF=$(VENV)/bin/ruff
+MYPY=$(VENV)/bin/mypy
+PYTEST=$(VENV)/bin/pytest
 
 setup:
-	$(PY) -m venv .venv && . .venv/bin/activate && pip install -U pip && pip install -r requirements.txt
-	@echo "Copy .env.example to .env and set OPENROUTER_* vars."
+	$(PY) -m venv $(VENV)
+	$(PIP) install -r requirements.txt
 
-verify:
-	. .venv/bin/activate && $(PY) scripts/verify.py
+fmt:
+	$(RUFF) format .
 
-demo:
-	. .venv/bin/activate && $(PY) scripts/demo.py
+lint:
+	$(RUFF) check .
 
-audit-pack:
-	. .venv/bin/activate && $(PY) scripts/audit_pack.py
+typecheck:
+	$(MYPY) src examples
 
-logs:
-	. .venv/bin/activate && $(PY) scripts/make_logs.py
+test:
+	$(PYTEST) -q
 
-release: audit-pack logs
-	. .venv/bin/activate && $(PY) scripts/make_release.py
+demo.pass: setup
+	$(RUN) -m proof_engine.orchestrator build-pcap --candidate examples/candidates/add_v1.py --out out/pcap.add.json
+	$(RUN) -m proof_engine.verifier verify --pcap out/pcap.add.json
+
+demo.fail: setup
+	$(RUN) -m proof_engine.orchestrator build-pcap --candidate examples/candidates/add_buggy.py --out out/pcap.add.json
+	$(RUN) -m proof_engine.verifier verify --pcap out/pcap.add.json

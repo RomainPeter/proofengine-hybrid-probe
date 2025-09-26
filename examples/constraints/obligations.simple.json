@@ -1,0 +1,9 @@
+{
+  "function_name": "add",
+  "type_signature": "def add(a: int, b: int) -> int",
+  "properties": [
+    "commutative: add(a,b) == add(b,a)",
+    "identity: add(a,0) == a",
+    "associative (sampled): add(add(a,b),c) == add(a,add(b,c))"
+  ]
+}

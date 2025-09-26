@@ -1,0 +1,55 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  demo-pass:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m venv .venv
+      - run: .venv/bin/pip install -r requirements.txt
+      - name: Build PCAP (pass)
+        run: .venv/bin/python -m proof_engine.orchestrator build-pcap --candidate examples/candidates/add_v1.py --out out/pcap.add.json
+      - name: Verify (pass)
+        run: .venv/bin/python -m proof_engine.verifier verify --pcap out/pcap.add.json
+      - name: Pytests
+        run: .venv/bin/python -m pytest -q
+      - name: Upload attestation
+        uses: actions/upload-artifact@v4
+        with:
+          name: attestation-pass
+          path: out/attestations/attestation.json
+
+  demo-fail:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m venv .venv
+      - run: .venv/bin/pip install -r requirements.txt
+      - name: Build PCAP (fail)
+        run: .venv/bin/python -m proof_engine.orchestrator build-pcap --candidate examples/candidates/add_buggy.py --out out/pcap.add.json
+      - name: Verify (expected to fail)
+        id: verify
+        run: |
+          set +e
+          .venv/bin/python -m proof_engine.verifier verify --pcap out/pcap.add.json
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+      - name: Assert verifier failed (document rejection)
+        run: |
+          test "${{ steps.verify.outputs.exit_code }}" != "0" || (echo "Verifier should have failed" && exit 1)
+      - name: Upload attestation if exists
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: attestation-fail
+          path: out/attestations/attestation.json
+          if-no-files-found: ignore

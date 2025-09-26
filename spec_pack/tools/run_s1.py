@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import subprocess, json, sys
-cmd = [sys.executable,"spec_pack/tools/verify.py","--s1"]
+
+cmd = [sys.executable, "spec_pack/tools/verify.py", "--s1"]
 print("Running S1 audit checks (minimality, trace bound, provenance)...")
 p = subprocess.run(cmd, capture_output=True, text=True)
 print(p.stdout)
